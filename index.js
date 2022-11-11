@@ -34,6 +34,34 @@ const messageShema= joi.object({
     time: joi.string().required().empty(),
 });
 
+app.post("/participants", async (req, res)=>{
+    const body = req.body;
+    const validation = participantShema.validate(body, {abortEarly: false});
+
+    if(validation.error){
+        const errors = validation.error.details.map((detail)=>detail.message);
+        res.status(422).send(errors);
+        return;
+    }
+
+    try {
+        const participantUsed = await db.collection("participants").findOne({name: body.name});
+
+        if(participantUsed){
+            res.sendStatus(409);
+            return;
+        }
+
+        await db.collection("participants").insertOne({
+            name: body.name,
+            lastStatus: Date.now()
+        })
+        res.send(201);
+      } catch (err) {
+        res.status(500).send(err);
+      }
+})
+
 app.listen(5000, ()=>{
     console.log("Server running in port 5000")
 });
