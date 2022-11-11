@@ -26,12 +26,6 @@ const participantSchema = joi.object({
     lastStatus: joi.number()
 });
 
-const messageSchema= joi.object({
-    to: joi.string().required().empty(),
-    text: joi.string().required().empty(),
-    type: joi.string().required().valid("message", "private_message"),
-});
-
 app.post("/participants", async (req, res)=>{
     const body = req.body;
     const validation = participantSchema.validate(body, {abortEarly: false});
@@ -47,7 +41,7 @@ app.post("/participants", async (req, res)=>{
         const participantUsed = await db.collection("participants").findOne({name: body.name});
 
         if(participantUsed){
-            res.sendStatus(409);
+            res.sendStatus(409).send("nome de usuário já existe");
             return;
         }
 
@@ -80,6 +74,12 @@ app.get("/participants", async (req,res)=>{
     }
 })
 
+const messageSchema= joi.object({
+    to: joi.string().required().empty(),
+    text: joi.string().required().empty(),
+    type: joi.string().required().valid("message", "private_message"),
+});
+
 app.post("/messages",async(req,res)=>{
     const {to, text, type} = req.body;
     const {user} = req.headers;
@@ -106,7 +106,7 @@ app.post("/messages",async(req,res)=>{
         type,
         time: dayjs().format('HH:MM:SS')
         };
-        await db.collection("messages").insertOne(message);
+        await db.collection("message").insertOne(message);
         res.sendStatus(201);
     }catch(error){
         res.status(500).send(error.message);
