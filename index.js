@@ -21,22 +21,20 @@ try{
     console.log(err);
 };
 
-const participantShema = joi.object({
+const participantSchema = joi.object({
     name: joi.string().required().empty(),
     lastStatus: joi.number()
 });
 
-const messageShema= joi.object({
-    from: joi.string().required().empty(),
+const messageSchema= joi.object({
     to: joi.string().required().empty(),
     text: joi.string().required().empty(),
     type: joi.string().required().valid("message", "private_message"),
-    time: joi.string().required().empty(),
 });
 
 app.post("/participants", async (req, res)=>{
     const body = req.body;
-    const validation = participantShema.validate(body, {abortEarly: false});
+    const validation = participantSchema.validate(body, {abortEarly: false});
 
     if(validation.error){
         const errors = validation.error.details.map((detail)=>detail.message);
@@ -79,6 +77,39 @@ app.get("/participants", async (req,res)=>{
     }catch(err){
         console.log(err);
         res.sendStatus(500);
+    }
+})
+
+app.post("/messages",async(req,res)=>{
+    const {to, text, type} = req.body;
+    const {user} = req.headers;
+    const validation = messageSchema.validate(req.body,{abortEarly: false});
+
+    if(validation.error){
+        const errors = validation.error.details.map((detail)=>detail.message);
+        res.status(422).send(errors);
+        console.log(errors);
+        return;
+    } ; 
+    const userLogged = await db.collection("participants").findOne({name: user});
+
+    if(!userLogged){
+        res.sendStatus(409).send("usuário não logado");
+        return;
+    };
+
+    try{
+        const message = {
+        from: user,
+        to,
+        text,
+        type,
+        time: dayjs().format('HH:MM:SS')
+        };
+        await db.collection("messages").insertOne(message);
+        res.sendStatus(201);
+    }catch(error){
+        res.status(500).send(error.message);
     }
 })
 
