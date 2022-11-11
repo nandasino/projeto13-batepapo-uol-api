@@ -41,6 +41,7 @@ app.post("/participants", async (req, res)=>{
     if(validation.error){
         const errors = validation.error.details.map((detail)=>detail.message);
         res.status(422).send(errors);
+        console.log(errors);
         return;
     }
 
@@ -56,6 +57,15 @@ app.post("/participants", async (req, res)=>{
             name: body.name,
             lastStatus: Date.now()
         })
+
+        await db.collection("message").insertOne({
+            from: body.name, 
+            to: 'Todos', 
+            text: 'entra na sala...', 
+            type: 'status', 
+            time: dayjs().format('HH:MM:SS')
+        })
+
         res.send(201);
       } catch (err) {
         res.status(500).send(err);
