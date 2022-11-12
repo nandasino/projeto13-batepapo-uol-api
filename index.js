@@ -55,7 +55,7 @@ app.post("/participants", async (req, res)=>{
             to: 'Todos', 
             text: 'entra na sala...', 
             type: 'status', 
-            time: dayjs().format('HH:MM:SS')
+            time: dayjs().format('HH:mm:ss')
         })
 
         res.send(201);
@@ -91,20 +91,21 @@ app.post("/messages",async(req,res)=>{
         console.log(errors);
         return;
     } ; 
-    const userLogged = await db.collection("participants").findOne({name: user});
-
-    if(!userLogged){
-        res.sendStatus(409).send("usuário não logado");
-        return;
-    };
 
     try{
+        const userLogged = await db.collection("participants").findOne({name: user});
+
+        if(!userLogged){
+            res.sendStatus(409).send("usuário não logado");
+            return;
+        };
+    
         const message = {
         from: user,
         to,
         text,
         type,
-        time: dayjs().format('HH:MM:SS')
+        time: dayjs().format('HH:mm:ss')
         };
         await db.collection("message").insertOne(message);
         res.sendStatus(201);
@@ -148,6 +149,30 @@ app.post("/status", async (req,res)=>{
         res.status(500).send(error.message);
     }
 })
+
+setInterval(async ()=>{ 
+    try{
+        const participants = await db.collection("participants").find().toArray();
+        const participantsOut = participants.filter(
+            (p)=> Date.now() - p.lastStatus > 10000 
+        );
+
+        participantsOut.forEach(async (element) => {
+            await db.collection("participants").deleteOne(element);
+            const message = {
+                from: element.name,
+                to: 'Todos',
+                text: 'sai da sala...',
+                type: 'status', 
+                time: dayjs().format('HH:mm:ss')
+            };
+            await db.collection("message").insertOne(message);
+        });        
+    }catch(error){
+        res.status(500).send(error.message);
+    }
+}, 15000)
+
 app.listen(5000, ()=>{
     console.log("Server running in port 5000")
 });
