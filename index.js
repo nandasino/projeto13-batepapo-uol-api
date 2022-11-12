@@ -116,9 +116,14 @@ app.post("/messages",async(req,res)=>{
 app.get("/messages", async(req, res)=>{ 
     const {limit} = req.query;
     const limitNumber = Number(limit);
+    const {user}= req.headers;
     try{
         const messages = await db.collection("message").find().toArray();
-        res.send(messages.slice(-limitNumber));
+        const showMessages = messages.filter(
+            (m)=> m.to === user || m.to === "Todos"|| m.from === user||m.type === "message"
+            );
+        const messagesToShow = showMessages.slice(-limitNumber);
+        res.send(messagesToShow);
     }catch(error){
         res.status(500).send(error.message);
     }
