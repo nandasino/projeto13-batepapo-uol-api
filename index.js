@@ -111,8 +111,17 @@ app.post("/messages",async(req,res)=>{
     }catch(error){
         res.status(500).send(error.message);
     }
-})
+});
 
+app.get("/messages", async(req, res)=>{
+    try{
+        const messages = await db.collection("message").find().toArray();
+        res.send(messages);
+        res.send(201);
+    }catch(error){
+        res.status(500).send(error.message);
+    }
+});
 app.listen(5000, ()=>{
     console.log("Server running in port 5000")
 });
