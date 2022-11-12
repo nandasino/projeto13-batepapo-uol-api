@@ -113,11 +113,12 @@ app.post("/messages",async(req,res)=>{
     }
 });
 
-app.get("/messages", async(req, res)=>{
+app.get("/messages", async(req, res)=>{ 
+    const {limit} = req.query;
+    const limitNumber = Number(limit);
     try{
         const messages = await db.collection("message").find().toArray();
-        res.send(messages);
-        res.send(201);
+        res.send(messages.slice(-limitNumber));
     }catch(error){
         res.status(500).send(error.message);
     }
